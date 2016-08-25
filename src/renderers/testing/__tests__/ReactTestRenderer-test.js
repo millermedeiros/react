@@ -206,4 +206,44 @@ describe('ReactTestRenderer', function() {
     expect(log).toEqual([null]);
   });
 
+  it('supports error boundaries', function() {
+    var didMount = false;
+    class Angry extends React.Component {
+      componentDidMount() {
+        didMount = true;
+      }
+      render() {
+        throw new Error('Please, do not render me.');
+      }
+    }
+
+    class Boundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = {error: false};
+      }
+      render() {
+        if (!this.state.error) {
+          return (<div><button onClick={this.onClick}>ClickMe</button><Angry /></div>);
+        } else {
+          return (<div>Happy Birthday!</div>);
+        }
+      }
+      onClick() {
+        /* do nothing */
+      }
+      unstable_handleError() {
+        this.setState({error: true});
+      }
+    }
+
+    var renderer = ReactTestRenderer.create(<Boundary />);
+    expect(renderer.toJSON()).toEqual({
+      type: 'div',
+      props: {},
+      children: ['Happy Birthday!'],
+    });
+    expect(didMount).toBe(false);
+  });
+
 });
